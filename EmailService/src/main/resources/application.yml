@@ -1,0 +1,5 @@
+security:
+  jwt:
+    secret: "SECRET_KEY_FOR_JWT_IS_MH-09-CS-5524"
+    expiration: 120000  #1800000 - 30 min
+

@@ -16,5 +16,11 @@ public class AppConstants {
 	public static final String STATUS_SUCCESS_MESSAGE = "Request processed successfully";
 
 	public static final String STATUS_ERROR = "ERROR";
-
+	
+	public static final String PLATFORM_GOOGLE_MEET = "GOOGLE_MEET";
+	public static final String PLATFORM_ZOOM = "ZOOM";
+	public static final String PLATFORM_TEAMS = "TEAMS";
+	
+	public static final String MODE_SMS = "SMS";
+	public static final String MODE_EMAIL = "EMAIL";
 }

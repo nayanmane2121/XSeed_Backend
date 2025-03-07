@@ -1,14 +1,12 @@
 package com.tcognition.userservice.serviceImpl;
 
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.security.SecureRandom;
+import java.time.Duration;
 import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
@@ -28,15 +26,11 @@ import com.tcognition.userservice.repository.UserRepository;
 import com.tcognition.userservice.repository.UserRoleMappingRepository;
 import com.tcognition.userservice.service.EmailServiceClient;
 import com.tcognition.userservice.service.LoginService;
-//import com.tcognition.userservice.service.RestTemplateService;̥
 import com.tcognition.userservice.utils.AppConstants;
 import com.tcognition.userservice.utils.ErrorMessagesConstants;
-//import com.tcognition.userservice.utils.JwtUtil;
 import com.tcognition.userservice.utils.MessageConstants;
 import com.twilio.Twilio;
 import com.twilio.rest.api.v2010.account.Message;
-import com.twilio.rest.verify.v2.service.Verification;
-import com.twilio.type.PhoneNumber;
 
 @Service
 public class LoginServiceImpl implements LoginService {
@@ -50,27 +44,19 @@ public class LoginServiceImpl implements LoginService {
 	@Autowired
 	EmailServiceClient emailServiceClient;
 
-//	@Value("${email.service.sendemail.url}")
-//	private String emailServiceUrl;
-
 	@Autowired
 	private JwtService jwtService;
 
-//	@Autowired
-//	JwtUtil jwtUtil;
-
 	@Autowired
 	private RedisTemplate<String, String> redisTemplate;
-	
+
 	@Autowired
 	Environment environment;
-
-//	@Autowired
-//	private RestTemplateService restTemplateService;
 
 	private static final Logger logger = LoggerFactory.getLogger(LoginServiceImpl.class);
 
 	private UserEntity validateUser(String userName) {
+
 		logger.info("Validating user details for: {}", userName);
 
 		Optional<UserEntity> userEntity = userRepository.findByEmailOrContactIgnoreCase(userName);
@@ -140,25 +126,20 @@ public class LoginServiceImpl implements LoginService {
 		logger.info("Inside resetPassword()");
 		logger.info("Fetching user details for: {}", resetPasswordRequestDTO.getUserContact());
 
-		
-
 		try {
 
 			UserEntity user = validateUser(resetPasswordRequestDTO.getUserContact());
 
-			if (user != null && resetPasswordRequestDTO.getMode().equals("SMS")) {
+			if (user != null && resetPasswordRequestDTO.getMode().equals(AppConstants.MODE_SMS)) {
 				return sendOtpViaSms(user);
 			}
 
-			if (user != null && resetPasswordRequestDTO.getMode().equals("EMAIL")) {
+			if (user != null && resetPasswordRequestDTO.getMode().equals(AppConstants.MODE_EMAIL)) {
 
 				return sendOtpViaEmail(user);
 			}
 
-			// return restTemplateService.callExternalServiceWithBody(emailServiceUrl,
-			// emailRequestDTO);
-
-			return ResponseDTO.error("Please select correct mode.");
+			return ResponseDTO.error(ErrorMessagesConstants.ERROR_CORRECT_MODE_SELECTION);
 
 		} catch (UserValidationException e) {
 			logger.error("Validation failed: {}", e.getMessage());
@@ -171,73 +152,44 @@ public class LoginServiceImpl implements LoginService {
 
 	private ResponseDTO sendOtpViaSms(UserEntity user) {
 
+		logger.info("Inside sendOtpViaSms()");
+
 		try {
-		Twilio.init(environment.getProperty("twilio_acc_sid"), environment.getProperty("twilio_auth_token"));
-		
-//		Message.creator(new PhoneNumber("+918379956518"),
-//                new PhoneNumber("+919588645519"), "Hello! Your One-Time Password (OTP) is: " +generateOtp()+". Please use it within the next 5 minutes").create();
-//		
-		
-		 Message message = Message
-                 .creator(new com.twilio.type.PhoneNumber("+918379956518"),
-                     new com.twilio.type.PhoneNumber("+919588645519"),
-                     "Hello! Your One-Time Password (OTP) is: " +generateOtp()+". Please use it within the next 5 minutes")
-                 .create();
+			Twilio.init(environment.getProperty("twilio_acc_sid"), environment.getProperty("twilio_auth_token"));
 
-		 
-//		    Verification verification = Verification.creator(
-//		            "VAb8b06774817f6169a2e588f237452b2b",
-//		            "+919588645519",
-//		            "sms")
-//		        .create();
+			Message message = Message.creator(new com.twilio.type.PhoneNumber("+918379956518"),
+					new com.twilio.type.PhoneNumber("+919588645519"), "Hello! Your One-Time Password (OTP) is: "
+							+ generateOtp() + ". Please use it within the next 5 minutes")
+					.create();
 
-		 //   System.out.println(verification.getSid());
-		  
-		
-		
-//		try {
-//			String apiKey = "MzU0OTRhNGU0NjM5NGEzODc0NTYzNTQ4NmQ2NzM1MzU=";
-//			String sender = "XSEEDAI"; // Customize sender ID (Optional)
-//
-//			// Create a custom message with the OTP
-//			String message = "Hello! Your One-Time Password (OTP) is: " + generateOtp()
-//					+ ". Please use it within the next 5 minutes.";
-//
-//			// Number to send the OTP to (in international format, e.g., +91 for India)
-//			String numbers = user.getContact();
-//
-//			// Construct the API request URL
-//			String url = "https://api.textlocal.in/send/?apikey=" + apiKey + "&numbers=" + numbers + "&message="
-//					+ message + "&sender=" + sender;
-//
-//			// Create a URL object and open a connection to the API
-//			URL obj = new URL(url);
-//			HttpURLConnection con = (HttpURLConnection) obj.openConnection();
-//			con.setRequestMethod("GET");
-//			con.setDoOutput(true);
-//
-//			// Send the HTTP request
-//			int responseCode = con.getResponseCode();
-//
-//			System.out.println("Response Code : " + responseCode); // Response code to check if message was sent
-			return ResponseDTO.success("OTP sent successfully...");
+			return ResponseDTO.success(MessageConstants.OTP_SENT_SUCCESSFULLY);
 		} catch (Exception e) {
 			e.printStackTrace(); // Handle any exceptions
 
-			return ResponseDTO.success("Error while sending OTP...");
+			return ResponseDTO.error(ErrorMessagesConstants.ERROR_SENDING_OTP);
 		}
 	}
 
 	private ResponseDTO sendOtpViaEmail(UserEntity user) {
 
+		logger.info("Inside sendOtpViaEmail()");
+
 		EmailRequestDTO emailRequestDTO = new EmailRequestDTO();
-		
+
 		emailRequestDTO.setSubject(MessageConstants.SUBJECT_RESET_PASSWORD);
 		emailRequestDTO.setTemplateName(AppConstants.TEMPLATE_RESET_PASSWORD);
 		emailRequestDTO.setMessage(generateOtp());
 		emailRequestDTO.setTo(user.getEmail());
 		emailRequestDTO.setName(user.getName());
-		
+
+		logger.info("Saving OTP in redis...");
+
+		// Saving the OTP in redis
+		ValueOperations<String, String> valueOperations = redisTemplate.opsForValue();
+		valueOperations.set("OTP:" + emailRequestDTO.getName(), emailRequestDTO.getMessage(), Duration.ofMinutes(5));
+
+		logger.info("OTP saved...");
+
 		return ResponseDTO.success(emailServiceClient.sendEmail(emailRequestDTO));
 
 	}

@@ -1,0 +1,10 @@
+security:
+  jwt:
+    secret: "SECRET_KEY_FOR_JWT_IS_MH-09-CS-5524"
+    expiration: 1800000
+spring:
+  data:
+    redis:
+      host: localhost
+      port: 6379
+

@@ -75,7 +75,7 @@ public class SuperAdminServiceImpl implements SuperAdminService {
 		    logger.info("Super Admin creation process completed successfully.");
 		    return ResponseDTO.success(MessageConstants.SUPER_ADMIN_CREATED_SUCCESSFULLY);
 		} catch (Exception e) {
-		    logger.error("An error occurred during the Super Admin creation process: {}", e.getMessage(), e);
+		    logger.error(ErrorMessagesConstants.ERROR_CREATING_SUPER_ADMIN, e);
 		    return ResponseDTO.success(ErrorMessagesConstants.ERROR_CREATING_SUPER_ADMIN);
 		}
 
